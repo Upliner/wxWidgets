@@ -367,7 +367,7 @@ wxWebSessionURLSession::wxWebSessionURLSession()
     m_delegate = [[wxWebSessionDelegate alloc] initWithSession:this];
 
     m_session = [[NSURLSession sessionWithConfiguration:
-                  [NSURLSessionConfiguration defaultSessionConfiguration]
+                  [NSURLSessionConfiguration ephemeralSessionConfiguration]
                                                delegate:m_delegate delegateQueue:nil] retain];
 }
 
