@@ -162,6 +162,92 @@
 
 @end
 
+@interface wxInputStreamWrapper : NSInputStream
+{
+    wxInputStream *m_stream;
+    wxFileOffset m_pos, m_size;
+    NSStreamStatus m_status;
+}
+
+@end
+
+@implementation wxInputStreamWrapper
+
+- (id)init:(wxInputStream*)stream size:(wxFileOffset)size
+{
+    m_stream = stream;
+    m_status = NSStreamStatusNotOpen;
+    m_pos = 0;
+    m_size = size;
+    return self;
+}
+
+- (void)open
+{
+    m_status = NSStreamStatusOpen;
+}
+- (void)close
+{
+    m_status = NSStreamStatusClosed;
+}
+
+- (id)propertyForKey:(NSStreamPropertyKey)key
+{
+    return nil;
+}
+- (BOOL)setProperty:(nullable id)property forKey:(NSStreamPropertyKey)key
+{
+    return NO;
+}
+
+- (void)setDelegate:(id<NSStreamDelegate>)delegate
+{
+}
+
+- (void)scheduleInRunLoop:(NSRunLoop *)aRunLoop forMode:(NSRunLoopMode)mode
+{
+}
+
+- (NSStreamStatus)streamStatus
+{
+    if (m_status != NSStreamStatusOpen)
+        return m_status;
+    if (m_pos >= m_size)
+        return NSStreamStatusAtEnd;
+    switch (m_stream->GetLastError())
+    {
+        case wxSTREAM_NO_ERROR:
+            return NSStreamStatusOpen;
+        case wxSTREAM_READ_ERROR:
+        case wxSTREAM_WRITE_ERROR:
+            return NSStreamStatusError;
+        case wxSTREAM_EOF:
+            return NSStreamStatusAtEnd;
+    }
+    return NSStreamStatusError;
+}
+
+- (NSInteger)read:(uint8_t *)buffer maxLength:(NSUInteger)len
+{
+    m_stream->Read(buffer, len);
+    len = m_stream->LastRead();
+    m_pos += len;
+    return len;
+}
+
+- (BOOL)getBuffer:(uint8_t * _Nullable *)buffer length:(NSUInteger *)len
+{
+    return NO;
+}
+
+- (BOOL)hasBytesAvailable {
+    if (m_pos >= m_size)
+        return false;
+    return !m_stream->Eof();
+}
+
+@end
+
 //
 // wxWebRequestURLSession
 //
@@ -198,21 +284,11 @@ void wxWebRequestURLSession::Start()
          wxCFStringRef(it->first).AsNSString()];
     }
 
-    if (m_dataSize)
-    {
-        // Read all upload data to memory buffer
-        void* const buf = malloc(m_dataSize);
-        m_dataStream->Read(buf, m_dataSize);
-
-        // Create NSData from memory buffer, passing it ownership of the data.
-        NSData* data = [NSData dataWithBytesNoCopy:buf length:m_dataSize];
-        m_task = [[m_sessionImpl.GetSession() uploadTaskWithRequest:req fromData:data] retain];
+    if (m_dataSize) {
+        [req setHTTPBodyStream:[[wxInputStreamWrapper alloc] init:m_dataStream.get() size:m_dataSize]];
+        [req setValue:[NSString stringWithFormat:@"%lli", (long long)m_dataSize] forHTTPHeaderField:@"Content-Length"];
     }
-    else
-    {
-        // Create data task
-        m_task = [[m_sessionImpl.GetSession() dataTaskWithRequest:req] retain];
-    }
+    m_task = [[m_sessionImpl.GetSession() dataTaskWithRequest:req] retain];
 
     wxLogTrace(wxTRACE_WEBREQUEST, "Request %p: start \"%s %s\"",
                this, method, m_url);
