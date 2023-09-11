@@ -69,11 +69,15 @@ void wxScrollBar::SetScrollbar( int position,
     m_pageSize = pageSize;
     m_viewSize = thumbSize;
     m_objectSize = range;
+    if (range <= 0) {
+        GetPeer()->Enable(false);
+    } else {
+        int range1 = wxMax( (m_objectSize - m_viewSize), 0 );
 
-   int range1 = wxMax( (m_objectSize - m_viewSize), 0 );
-
-   GetPeer()->SetMaximum( range1 );
-   GetPeer()->SetScrollThumb( position, m_viewSize );
+        GetPeer()->Enable(true);
+        GetPeer()->SetMaximum( range1 );
+        GetPeer()->SetScrollThumb( position, m_viewSize );
+    }
 }
 
 void wxScrollBar::Command( wxCommandEvent& event )
