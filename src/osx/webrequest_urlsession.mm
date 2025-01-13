@@ -284,11 +284,26 @@ void wxWebRequestURLSession::Start()
          wxCFStringRef(it->first).AsNSString()];
     }
 
+    NSData *data = nil;
     if (m_dataSize) {
-        [req setHTTPBodyStream:[[wxInputStreamWrapper alloc] init:m_dataStream.get() size:m_dataSize]];
-        [req setValue:[NSString stringWithFormat:@"%lli", (long long)m_dataSize] forHTTPHeaderField:@"Content-Length"];
+        if (m_dataSize > 20000) {
+            // For large input streams, use our stream wrapper
+            [req setHTTPBodyStream:[[wxInputStreamWrapper alloc] init:m_dataStream.get() size:m_dataSize]];
+            [req setValue:[NSString stringWithFormat:@"%lli", (long long)m_dataSize] forHTTPHeaderField:@"Content-Length"];
+        } else {
+            // Read all upload data to memory buffer
+            void* const buf = malloc(m_dataSize);
+            m_dataStream->Read(buf, m_dataSize);
+
+            // Create NSData from memory buffer, passing it ownership of the data.
+            NSData* data = [NSData dataWithBytesNoCopy:buf length:m_dataSize];
+        }
     }
-    m_task = [[m_sessionImpl.GetSession() dataTaskWithRequest:req] retain];
+    // Create data task
+    if (data)
+        m_task = [[m_sessionImpl.GetSession() uploadTaskWithRequest:req fromData:data] retain];
+    else
+        m_task = [[m_sessionImpl.GetSession() dataTaskWithRequest:req] retain];
 
     wxLogTrace(wxTRACE_WEBREQUEST, "Request %p: start \"%s %s\"",
                this, method, m_url);
