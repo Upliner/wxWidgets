@@ -14,7 +14,7 @@
 // builtin which should be used instead of manual checks for API availability
 // as using this builtin suppresses the compiler -Wunguarded-availability
 // warnings, so use it if possible for the implementation of our own macro.
-#if defined(__clang__) && __has_builtin(__builtin_available)
+#if defined(__clang__) && __has_builtin(__builtin_available) && 0
     #define WX_IS_MACOS_AVAILABLE(major, minor) \
         __builtin_available(macOS major ## . ## minor, *)
 
