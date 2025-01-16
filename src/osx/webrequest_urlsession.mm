@@ -296,7 +296,7 @@ void wxWebRequestURLSession::Start()
             m_dataStream->Read(buf, m_dataSize);
 
             // Create NSData from memory buffer, passing it ownership of the data.
-            NSData* data = [NSData dataWithBytesNoCopy:buf length:m_dataSize];
+            data = [NSData dataWithBytesNoCopy:buf length:m_dataSize];
         }
     }
     // Create data task
