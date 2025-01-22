@@ -45,7 +45,7 @@
 // delegate for filtering by wildcard
 // ============================================================================
 
-@interface wxOpenSavePanelDelegate : NSObject<NSOpenSavePanelDelegate>
+/*@interface wxOpenSavePanelDelegate : NSObject<NSOpenSavePanelDelegate>
 
 - (void)setAllowedExtensions:(const wxArrayString &)extensions;
 
@@ -97,7 +97,7 @@
 }
 
 @end
-
+*/
 // ============================================================================
 // implementation
 // ============================================================================
@@ -107,7 +107,7 @@ wxIMPLEMENT_CLASS(wxFileDialog, wxFileDialogBase);
 void wxFileDialog::Init()
 {
     m_filterIndex = -1;
-    m_delegate = nil;
+    //m_delegate = nil;
     m_filterPanel = NULL;
     m_filterChoice = NULL;
     m_useFileTypeFilter = false;
@@ -321,9 +321,9 @@ void wxFileDialog::ShowWindowModal()
         }
         else
         {
-          if ( m_delegate )
+          /*if ( m_delegate )
             [(wxOpenSavePanelDelegate*) m_delegate setAllowedExtensions: m_currentExtensions];
-          else
+          else*/
             [sPanel setAllowedFileTypes: types];
         }
 
@@ -366,9 +366,9 @@ void wxFileDialog::ShowWindowModal()
         }
         else
         {
-          if ( m_delegate )
+          /*if ( m_delegate )
             [(wxOpenSavePanelDelegate*) m_delegate setAllowedExtensions: m_currentExtensions];
-          else
+          else*/
             [oPanel setAllowedFileTypes: types];
         }
 
@@ -458,12 +458,12 @@ void wxFileDialog::DoOnFilterSelected(int index)
 {
     NSArray* types = GetTypesFromExtension(m_filterExtensions[index],m_currentExtensions);
     NSSavePanel* panel = (NSSavePanel*) GetWXWindow();
-    if ( m_delegate )
+    /*if ( m_delegate )
     {
         [(wxOpenSavePanelDelegate*)m_delegate setAllowedExtensions:m_currentExtensions];
         [panel validateVisibleColumns];
     }
-    else
+    else*/
         [panel setAllowedFileTypes:types];
 
     m_currentlySelectedFilterIndex = index;
@@ -641,9 +641,9 @@ int wxFileDialog::ShowModal()
         }
         else
         {
-          if ( m_delegate )
+          /*if ( m_delegate )
             [(wxOpenSavePanelDelegate*) m_delegate setAllowedExtensions: m_currentExtensions];
-          else
+          else*/
             [sPanel setAllowedFileTypes: types];
         }
 
@@ -663,9 +663,9 @@ int wxFileDialog::ShowModal()
         
         SetupExtraControls(oPanel);
 
-        wxOpenSavePanelDelegate* del = [[wxOpenSavePanelDelegate alloc]init];
+        /*wxOpenSavePanelDelegate* del = [[wxOpenSavePanelDelegate alloc]init];
         [oPanel setDelegate:del];
-        m_delegate = del;
+        m_delegate = del;*/
 
         [oPanel setTreatsFilePackagesAsDirectories:NO];
         [oPanel setCanChooseDirectories:NO];
@@ -687,9 +687,9 @@ int wxFileDialog::ShowModal()
         }
         else
         {
-            if ( m_delegate )
+            /*if ( m_delegate )
                 [(wxOpenSavePanelDelegate*) m_delegate setAllowedExtensions: m_currentExtensions];
-            else
+            else*/
                 [oPanel setAllowedFileTypes: types];
         }
         if ( !m_dir.IsEmpty() )
@@ -742,12 +742,12 @@ void wxFileDialog::ModalFinishedCallback(void* panel, int returnCode)
                 }
             }
         }
-        if ( m_delegate )
+        /*if ( m_delegate )
         {
             [oPanel setDelegate:nil];
             [m_delegate release];
             m_delegate = nil;
-        }
+        }*/
     }
 
     if (wasAccepted)
