@@ -555,7 +555,9 @@ void wxWindowBase::SendDestroyEvent()
     wxWindowDestroyEvent event;
     event.SetEventObject(this);
     event.SetId(GetId());
-    GetEventHandler()->ProcessEvent(event);
+    wxEvtHandler *h = GetEventHandler();
+    if (h)
+        h->ProcessEvent(event);
 }
 
 bool wxWindowBase::Destroy()
@@ -1550,7 +1552,10 @@ bool wxWindowBase::RemoveEventHandler(wxEvtHandler *handlerToRemove)
 bool wxWindowBase::HandleWindowEvent(wxEvent& event) const
 {
     // SafelyProcessEvent() will handle exceptions nicely
-    return GetEventHandler()->SafelyProcessEvent(event);
+    wxEvtHandler *h = GetEventHandler();
+    if (!h)
+        return false;
+    return h->SafelyProcessEvent(event);
 }
 
 // ----------------------------------------------------------------------------
