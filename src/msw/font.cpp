@@ -1090,6 +1090,7 @@ namespace
 
 // Contains the file names of all fonts added by AddPrivateFont().
 wxArrayString gs_privateFontFileNames;
+std::vector<std::pair<const void*, size_t>> gs_privateFontMemFonts;
 
 } // anonymous namespace
 
@@ -1097,6 +1098,10 @@ wxArrayString gs_privateFontFileNames;
 extern const wxArrayString& wxGetPrivateFontFileNames()
 {
     return gs_privateFontFileNames;
+}
+extern const std::vector<std::pair<const void*, size_t>>& wxGetPrivateMemFonts()
+{
+    return gs_privateFontMemFonts;
 }
 
 // We need to use a module to clean up the list of private fonts when the
@@ -1107,7 +1112,10 @@ public:
     wxPrivateFontsListModule() { }
 
     bool OnInit() override { return true; }
-    void OnExit() override { gs_privateFontFileNames.clear(); }
+    void OnExit() override {
+        gs_privateFontFileNames.clear();
+        gs_privateFontMemFonts.clear();
+    }
 
 private:
     wxDECLARE_DYNAMIC_CLASS(wxPrivateFontsListModule);
@@ -1125,6 +1133,19 @@ bool wxFontBase::AddPrivateFont(const wxString& filename)
 
     // Remember it for use in wxGDIPlusRenderer::Load().
     gs_privateFontFileNames.Add(filename);
+    return true;
+}
+bool wxFontBase::AddPrivateFont(const void *data, size_t size)
+{
+    DWORD numFonts = 0;
+    if ( !AddFontMemResourceEx(const_cast<PVOID>(data), (DWORD)size, nullptr, &numFonts) || !numFonts )
+    {
+        wxLogError(_("Failed to add private font with size %llu"), (unsigned long long)size);
+        return false;
+    }
+
+    // Remember it for use in wxGDIPlusRenderer::Load().
+    gs_privateFontMemFonts.emplace_back(data, size);
     return true;
 }
 

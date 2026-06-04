@@ -388,6 +388,7 @@ public:
     // error (an error message will be logged in this case).
 #if wxUSE_PRIVATE_FONTS
     static bool AddPrivateFont(const wxString& filename);
+    static bool AddPrivateFont(const void *data, size_t size);
 #endif // wxUSE_PRIVATE_FONTS
 
     // comparison

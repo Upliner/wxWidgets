@@ -1129,6 +1129,7 @@ Gdiplus::FontFamily* gs_pFontFamily = nullptr;
 
 // This function is defined in src/msw/font.cpp.
 extern const wxArrayString& wxGetPrivateFontFileNames();
+extern const std::vector<std::pair<const void*, size_t>>& wxGetPrivateMemFonts();
 
 #endif // wxUSE_PRIVATE_FONTS
 
@@ -2696,18 +2697,22 @@ void wxGDIPlusRenderer::Load()
 
 #if wxUSE_PRIVATE_FONTS
         // Make private fonts available to GDI+, if any.
-        const wxArrayString& privateFonts = wxGetPrivateFontFileNames();
-        const size_t n = privateFonts.size();
+        const auto &privateFonts = wxGetPrivateFontFileNames();
+        const auto &privateMemFonts = wxGetPrivateMemFonts();
+        const size_t n = privateFonts.size() + privateMemFonts.size();
         if ( n )
         {
             gs_privateFonts = new Gdiplus::PrivateFontCollection();
-            for ( size_t i = 0 ; i < n; i++ )
+            for ( size_t i = 0 ; i < privateFonts.size(); i++ )
             {
                 const wxString& fname = privateFonts[i];
                 gs_privateFonts->AddFontFile(fname.wc_str());
             }
+            for (const auto &memFont : privateMemFonts)
+                if (gs_privateFonts->AddMemoryFont(memFont.first, (INT)memFont.second) != Status::Ok)
+                    wxLogError(_("Failed to add private font with size %llu"), (unsigned long long)memFont.second);
 
-            gs_pFontFamily = new Gdiplus::FontFamily[n];
+            gs_pFontFamily = new Gdiplus::FontFamily[gs_privateFonts->GetFamilyCount()];
         }
 #endif // wxUSE_PRIVATE_FONTS
     }
